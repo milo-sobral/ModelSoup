@@ -29,7 +29,7 @@ def make_soup(models_folder, method, model_class, evaluator, device, initial_mod
 
     while initial_model_file is None:
         chosen_file = random.choice(all_model_files)
-        if os.path.isfile(os.path.join(models_folder, initial_model_file)): #ignore hidden directories
+        if os.path.isfile(os.path.join(models_folder, chosen_file)): #ignore hidden directories
             initial_model_file = chosen_file
 
     model_class.to(device)
