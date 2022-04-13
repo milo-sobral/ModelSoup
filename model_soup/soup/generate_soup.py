@@ -44,7 +44,7 @@ def make_soup(models_folder, method, model_class, evaluator, device, initial_mod
 
     all_model_files.remove(initial_model_file)
     for file in all_model_files:
-        if os.path.isfile(os.path.join(models_folder, initial_model_file)): #ignore hidden directories
+        if os.path.isfile(os.path.join(models_folder, file)): #ignore hidden directories
             file = os.path.join(models_folder, file)
             # Load model weights into the model class
             model_class.load_state_dict(torch.load(file, map_location=device)['state_dict'])
@@ -70,7 +70,7 @@ def make_soup(models_folder, method, model_class, evaluator, device, initial_mod
         baseline_performance = evaluator.eval_func(final_weights)
 
         for file in os.listdir(models_folder):
-            if os.path.isfile(os.path.join(models_folder, initial_model_file)): #ignore hidden directories
+            if os.path.isfile(os.path.join(models_folder, file)): #ignore hidden directories
                 # Load model weights into the model class
                 model_class.load_state_dict(torch.load(file))
 
