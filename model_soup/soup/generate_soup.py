@@ -1,7 +1,3 @@
-# Take a folder full of different models as input
-# generate a model that is the average using one of the specified methods
-# Outputs this model
-
 import argparse
 import torch
 import os
