@@ -15,7 +15,7 @@ def avg_weights(old_weights, new_weights, N):
 
 def remove_weights(old_weights, weight_removed, N):
     for idx, weight_matrix in enumerate(old_weights):
-        old_weights[idx] = (N * weight_matrix) - new_weights[idx] / (N - 1)
+        old_weights[idx] = (N * weight_matrix) - weight_removed[idx] / (N - 1)
     return old_weights, N-1
 
 
