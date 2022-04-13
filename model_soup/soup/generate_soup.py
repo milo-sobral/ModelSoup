@@ -1,13 +1,20 @@
-import argparse
 import torch
 import os
+from enum import Enum
+import random
 
-METHODS = ['UNIFORM', 'GREEDY', 'PRUNED']
+
+class Methods(Enum):
+    UNIFORM = 1
+    GREEDY = 2
+    PRUNED = 3
+
 
 def avg_weights(old_weights, new_weights, N):
     for idx, weight_matrix in enumerate(old_weights):
         old_weights[idx] = (N * weight_matrix) + new_weights[idx] / (N + 1)
     return old_weights, N+1
+
 
 def remove_weights(old_weights, weight_removed, N):
     for idx, weight_matrix in enumerate(old_weights):
@@ -15,20 +22,27 @@ def remove_weights(old_weights, weight_removed, N):
     return old_weights, N-1
 
 
-def make_soup(models_folder, method, model_class, initial_model_file, eval_func=None):
+def make_soup(models_folder, method, model_class, evaluator, initial_model_file=None):
 
-    model_class.load_state_dict(torch.load(initial_model_file))
+    all_model_files = os.listdir(models_folder)
+
+
+    if initial_model_file is None:
+        initial_model_file = random.choice(all_model_files)
+
+    model_class.load_state_dict(torch.load(os.path.join(models_folder, initial_model_file)))
     model_class.eval()
 
     final_weights = [param for param in model_class.parameters()]
     N = 1
 
-    if method == "GREEDY":
-        baseline_performance = eval_func(model_class)
+    if method == Methods.UNIFORM:
+        baseline_performance = evaluator.eval_func(model_class)
 
-    for file in os.listdir(models_folder):
+    files = files.remove(initial_model_file)
+    for file in files:
         # TODO: Check that we have a model file and not something else
-
+        file = os.path.join(file, models_folder)
         # Load model weights into the model class
         model_class.load_state_dict(torch.load(file))
         model_class.eval()
@@ -37,17 +51,17 @@ def make_soup(models_folder, method, model_class, initial_model_file, eval_func=
         weights = [param for param in model_class.parameters()]
 
         # Create the soup
-        if method == "UNIFORM" or method == "PRUNED":
+        if method == Methods.UNIFORM or method == Methods.PRUNED:
             final_weights, N = avg_weights(final_weights, weights, N)
-        elif method == "GREEDY":
-            new_performance = eval_func(model_class)
+        elif method == Methods.GREEDY:
+            new_performance = evaluator.eval_func(model_class)
 
             if new_performance >= baseline_performance:
                 final_weights, N = avg_weights(final_weights, weights, N)
             baseline_performance = new_performance
      
-    if method == "PRUNED":
-        baseline_performance = eval_func(final_weights)
+    if method == Methods.PRUNED:
+        baseline_performance = evaluator.eval_func(final_weights)
 
         for file in os.listdir(models_folder):
             # TODO: Check that we have a model file and not something else
@@ -57,7 +71,7 @@ def make_soup(models_folder, method, model_class, initial_model_file, eval_func=
 
             #prune the soup
             final_weights, N = remove_weights(final_weights)
-            new_performance = eval_func(final_weights)
+            new_performance = evaluator.eval_func(final_weights)
 
             #if the performance drops, add back to the soup
             if new_performance < baseline_performance:
@@ -65,12 +79,6 @@ def make_soup(models_folder, method, model_class, initial_model_file, eval_func=
             else:
                 baseline_performance = new_performance
 
-                
+    evaluator.set_weights(final_weights)
+    return evaluator.get_model()
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('models_folder')
-    parser.add_argument('initial_model')
-    parser.add_argument('--method', type=str, choices=METHODS)  
-    args = parser.parse_args()
-    make_soup(args.models_folder, args.method, args.initial_model)

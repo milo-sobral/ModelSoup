@@ -8,6 +8,5 @@ setup(
    url='https://github.com/milo-sobral/ModelSoup',
    install_requires=[
        'torch', 
-       'torchvision', 
-       'argparse'], #external packages as dependencies
+       'torchvision'], #external packages as dependencies
 )
