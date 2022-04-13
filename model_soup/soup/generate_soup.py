@@ -44,7 +44,6 @@ def make_soup(models_folder, soup, evaluator, device, method=Methods.GREEDY, ini
 
     all_model_files.remove(initial_model_file)
     for file in all_model_files:
-
         if os.path.isfile(os.path.join(models_folder, file)): #ignore hidden directories
             file = os.path.join(models_folder, file)
             soup_next = deepcopy(soup)
