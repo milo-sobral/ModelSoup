@@ -2,6 +2,7 @@ import torch
 import os
 from enum import Enum
 import random
+from copy import deepcopy
 
 
 class Methods(Enum):
@@ -10,77 +11,56 @@ class Methods(Enum):
     PRUNED = 3
 
 
-def avg_weights(old_weights, new_weights, N):
-    for idx, weight_matrix in enumerate(old_weights):
-        old_weights[idx] = (N * weight_matrix) + new_weights[idx] / (N + 1)
-    return old_weights, N+1
+def add_ingradient(soup, path, N):
+    ingradient = deepcopy(soup)
+    ingradient.load_state_dict(torch.load(path)['state_dict'])
+    ingradient.cuda()
+
+    for param1, param2 in zip(soup.parameters(), ingradient.parameters()):
+        param1.data = ((param1.data * N) + param2.data) / (N+1)
+        
+    return soup, N+1
 
 
-def remove_weights(old_weights, weight_removed, N):
-    for idx, weight_matrix in enumerate(old_weights):
-        old_weights[idx] = (N * weight_matrix) - weight_removed[idx] / (N - 1)
-    return old_weights, N-1
-
-
-def make_soup(models_folder, method, model_class, evaluator, device, initial_model_file=None):
+def make_soup(models_folder, soup, evaluator, device, method=Methods.GREEDY, initial_model_file=None):
 
     all_model_files = os.listdir(models_folder)
 
+    while initial_model_file is None:
+        chosen_file = random.choice(all_model_files)
+        if os.path.isfile(os.path.join(models_folder, chosen_file)): #ignore hidden directories
+            initial_model_file = chosen_file
 
-    if initial_model_file is None:
-        initial_model_file = random.choice(all_model_files)
+    soup.load_state_dict(torch.load(os.path.join(models_folder, initial_model_file), map_location=device)['state_dict'])
+    soup.to(device)
+    soup.eval()
 
-    model_class.to(device)
-    model_class.load_state_dict(torch.load(os.path.join(models_folder, initial_model_file), map_location=device)['state_dict'])
-    model_class.eval()
-
-    final_weights = [param for param in model_class.parameters()]
+    # final_weights = [param.data for param in soup.parameters()]
     N = 1
 
-    if method == Methods.UNIFORM:
-        baseline_performance = evaluator.eval_func(final_weights)
+    if method == Methods.GREEDY:
+        baseline_performance = evaluator.eval_func(soup)
+    print(f"baseline: {baseline_performance}")
 
     all_model_files.remove(initial_model_file)
     for file in all_model_files:
-        # TODO: Check that we have a model file and not something else
-        file = os.path.join(models_folder, file)
-        # Load model weights into the model class
-        model_class.load_state_dict(torch.load(file, map_location=device)['state_dict'])
-        model_class.eval()
 
-        # Get all weights
-        weights = [param for param in model_class.parameters()]
+        if os.path.isfile(os.path.join(models_folder, file)): #ignore hidden directories
+            file = os.path.join(models_folder, file)
+            soup_next = deepcopy(soup)
+            soup_next, N = add_ingradient(soup_next, file, N)
+            new_performance = evaluator.eval_func(soup_next)
+            print(f"new perf: {new_performance}")
 
-        # Create the soup
-        if method == Methods.UNIFORM or method == Methods.PRUNED:
-            final_weights, N = avg_weights(final_weights, weights, N)
-        elif method == Methods.GREEDY:
-            final_weights, N = avg_weights(final_weights, weights, N)
-            new_performance = evaluator.eval_func(final_weights)
-
-            if new_performance >= baseline_performance:
-                final_weights, N = avg_weights(final_weights, weights, N)
+            if method == Methods.GREEDY:
+                if new_performance >= baseline_performance:
+                    soup = soup_next
+                    baseline_performance = new_performance
+            elif method == Methods.UNIFORM:
+                soup = soup_next
             else:
-                final_weights, N = remove_weights(final_weights, weights, N)
-            baseline_performance = new_performance
-     
-    if method == Methods.PRUNED:
-        baseline_performance = evaluator.eval_func(final_weights)
+                raise NotImplemented                     
 
-        for file in os.listdir(models_folder):
-            # Load model weights into the model class
-            model_class.load_state_dict(torch.load(file))
-
-            #prune the soup
-            final_weights, N = remove_weights(final_weights, weights, N)
-            new_performance = evaluator.eval_func(final_weights)
-
-            #if the performance drops, add back to the soup
-            if new_performance < baseline_performance:
-                final_weights, N = avg_weights(final_weights, weights, N)
-            else:
-                baseline_performance = new_performance
-
-    final_performance = evaluator.eval_func(final_weights)
-    return evaluator.get_model(), final_performance
+    final_performance = evaluator.eval_func(soup)
+    return soup, final_performance
 
