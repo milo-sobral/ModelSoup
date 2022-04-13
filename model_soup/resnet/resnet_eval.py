@@ -28,7 +28,7 @@ class ResnetEvaluator:
         '''
         Eval function to test the model with the given weights over the test dataset
         '''
-        self._set_weights(weights)
+        self.set_weights(weights)
         self.model.eval()
         correct = 0
         total = 0
@@ -40,13 +40,14 @@ class ResnetEvaluator:
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
 
-        return ((100 * correct / total))
+        return 100 * correct / total
 
     def set_weights(self, weights):
         '''
         Set the weights in the model to the input weights
         '''
-        for weight, param in zip(weights, self.model.parameters()):
+        params = [param for param in self.model.parameters()]
+        for weight, param in zip(weights, params):
             param.data = weight
 
     def get_model(self):
