@@ -24,10 +24,13 @@ def remove_weights(old_weights, weight_removed, N):
 
 def make_soup(models_folder, method, model_class, evaluator, initial_model_file=None):
 
-    if initial_model_file is None:
-        initial_model_file = random.choice(models_folder)
+    all_model_files = os.listdir(models_folder)
 
-    model_class.load_state_dict(torch.load(initial_model_file))
+
+    if initial_model_file is None:
+        initial_model_file = random.choice(all_model_files)
+
+    model_class.load_state_dict(torch.load(os.path.join(models_folder, initial_model_file)))
     model_class.eval()
 
     final_weights = [param for param in model_class.parameters()]
@@ -36,11 +39,10 @@ def make_soup(models_folder, method, model_class, evaluator, initial_model_file=
     if method == Methods.UNIFORM:
         baseline_performance = evaluator.eval_func(model_class)
 
-    files = os.listdir(models_folder)
     files = files.remove(initial_model_file)
     for file in files:
         # TODO: Check that we have a model file and not something else
-
+        file = os.path.join(file, models_folder)
         # Load model weights into the model class
         model_class.load_state_dict(torch.load(file))
         model_class.eval()
