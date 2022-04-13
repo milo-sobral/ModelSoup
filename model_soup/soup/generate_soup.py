@@ -1,7 +1,8 @@
-import argparse
 import torch
 import os
 from enum import Enum
+import random
+
 
 class Methods(Enum):
     UNIFORM = 1
@@ -14,13 +15,17 @@ def avg_weights(old_weights, new_weights, N):
         old_weights[idx] = (N * weight_matrix) + new_weights[idx] / (N + 1)
     return old_weights, N+1
 
+
 def remove_weights(old_weights, weight_removed, N):
     for idx, weight_matrix in enumerate(old_weights):
         old_weights[idx] = (N * weight_matrix) - weight_removed[idx] / (N - 1)
     return old_weights, N-1
 
 
-def make_soup(models_folder, method, model_class, initial_model_file, evaluator):
+def make_soup(models_folder, method, model_class, evaluator, initial_model_file=None):
+
+    if initial_model_file is None:
+        initial_model_file = random.choice(models_folder)
 
     model_class.load_state_dict(torch.load(initial_model_file))
     model_class.eval()
@@ -31,7 +36,9 @@ def make_soup(models_folder, method, model_class, initial_model_file, evaluator)
     if method == Methods.UNIFORM:
         baseline_performance = evaluator.eval_func(model_class)
 
-    for file in os.listdir(models_folder):
+    files = os.listdir(models_folder)
+    files = files.remove(initial_model_file)
+    for file in files:
         # TODO: Check that we have a model file and not something else
 
         # Load model weights into the model class
@@ -69,6 +76,7 @@ def make_soup(models_folder, method, model_class, initial_model_file, evaluator)
                 final_weights, N = avg_weights(final_weights, weights, N)
             else:
                 baseline_performance = new_performance
+
     evaluator.set_weights(final_weights)
     return evaluator.get_model()
 
