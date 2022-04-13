@@ -4,8 +4,9 @@ import torchvision.transforms as transforms
 
 
 class ResnetEvaluator:
-    def __init__(self, device, batch_size=256, input_size=32):
-
+    def __init__(self, device=None, batch_size=256, input_size=32):
+        if device is None:
+            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         data_transforms = {
             'test': transforms.Compose([
                 transforms.Resize(input_size),
