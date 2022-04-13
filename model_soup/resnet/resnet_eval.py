@@ -24,7 +24,7 @@ class ResnetEvaluator:
         self.model = model
         self.device = device
 
-    def eval_function_resnet(self, weights):
+    def eval_func(self, weights):
         '''
         Eval function to test the model with the given weights over the test dataset
         '''
@@ -42,9 +42,12 @@ class ResnetEvaluator:
 
         return ((100 * correct / total))
 
-    def _set_weights(self, weights):
+    def set_weights(self, weights):
         '''
         Set the weights in the model to the input weights
         '''
         for weight, param in zip(weights, self.model.parameters()):
             param.data = weight
+
+    def get_model(self):
+        return self.model

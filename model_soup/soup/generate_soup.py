@@ -15,7 +15,7 @@ def remove_weights(old_weights, weight_removed, N):
     return old_weights, N-1
 
 
-def make_soup(models_folder, method, model_class, initial_model_file, eval_func=None):
+def make_soup(models_folder, method, model_class, initial_model_file, evaluator):
 
     model_class.load_state_dict(torch.load(initial_model_file))
     model_class.eval()
@@ -24,7 +24,7 @@ def make_soup(models_folder, method, model_class, initial_model_file, eval_func=
     N = 1
 
     if method == "GREEDY":
-        baseline_performance = eval_func(model_class)
+        baseline_performance = evaluator.eval_func(model_class)
 
     for file in os.listdir(models_folder):
         # TODO: Check that we have a model file and not something else
@@ -40,14 +40,14 @@ def make_soup(models_folder, method, model_class, initial_model_file, eval_func=
         if method == "UNIFORM" or method == "PRUNED":
             final_weights, N = avg_weights(final_weights, weights, N)
         elif method == "GREEDY":
-            new_performance = eval_func(model_class)
+            new_performance = evaluator.eval_func(model_class)
 
             if new_performance >= baseline_performance:
                 final_weights, N = avg_weights(final_weights, weights, N)
             baseline_performance = new_performance
      
     if method == "PRUNED":
-        baseline_performance = eval_func(final_weights)
+        baseline_performance = evaluator.eval_func(final_weights)
 
         for file in os.listdir(models_folder):
             # TODO: Check that we have a model file and not something else
@@ -57,15 +57,16 @@ def make_soup(models_folder, method, model_class, initial_model_file, eval_func=
 
             #prune the soup
             final_weights, N = remove_weights(final_weights)
-            new_performance = eval_func(final_weights)
+            new_performance = evaluator.eval_func(final_weights)
 
             #if the performance drops, add back to the soup
             if new_performance < baseline_performance:
                 final_weights, N = avg_weights(final_weights, weights, N)
             else:
                 baseline_performance = new_performance
-
-                
+    evaluator.set_weights(final_weights)
+    return evaluator.get_model()
+         
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
