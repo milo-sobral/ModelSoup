@@ -1,8 +1,13 @@
 import argparse
 import torch
 import os
+from enum import Enum
 
-METHODS = ['UNIFORM', 'GREEDY', 'PRUNED']
+class Methods(Enum):
+    UNIFORM = 1
+    GREEDY = 2
+    PRUNED = 3
+
 
 def avg_weights(old_weights, new_weights, N):
     for idx, weight_matrix in enumerate(old_weights):
@@ -23,7 +28,7 @@ def make_soup(models_folder, method, model_class, initial_model_file, evaluator)
     final_weights = [param for param in model_class.parameters()]
     N = 1
 
-    if method == "GREEDY":
+    if method == Methods.UNIFORM:
         baseline_performance = evaluator.eval_func(model_class)
 
     for file in os.listdir(models_folder):
@@ -37,16 +42,16 @@ def make_soup(models_folder, method, model_class, initial_model_file, evaluator)
         weights = [param for param in model_class.parameters()]
 
         # Create the soup
-        if method == "UNIFORM" or method == "PRUNED":
+        if method == Methods.UNIFORM or method == Methods.PRUNED:
             final_weights, N = avg_weights(final_weights, weights, N)
-        elif method == "GREEDY":
+        elif method == Methods.GREEDY:
             new_performance = evaluator.eval_func(model_class)
 
             if new_performance >= baseline_performance:
                 final_weights, N = avg_weights(final_weights, weights, N)
             baseline_performance = new_performance
      
-    if method == "PRUNED":
+    if method == Methods.PRUNED:
         baseline_performance = evaluator.eval_func(final_weights)
 
         for file in os.listdir(models_folder):
@@ -66,12 +71,4 @@ def make_soup(models_folder, method, model_class, initial_model_file, evaluator)
                 baseline_performance = new_performance
     evaluator.set_weights(final_weights)
     return evaluator.get_model()
-         
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('models_folder')
-    parser.add_argument('initial_model')
-    parser.add_argument('--method', type=str, choices=METHODS)  
-    args = parser.parse_args()
-    make_soup(args.models_folder, args.method, args.initial_model)
