@@ -18,25 +18,40 @@ class ResnetEvaluator:
 
         testset = torchvision.datasets.CIFAR100(root='./data/CIFAR100', train=False,
                                        download=True, transform=data_transforms["test"])
+        valset, testset = torch.utils.data.random_split(testset, [5000, 5000])
 
         self.testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
+                                         shuffle=False, num_workers=2)
+        self.validloader = torch.utils.data.DataLoader(valset, batch_size=batch_size,
                                          shuffle=False, num_workers=2)
 
         self.device = device
 
-    def eval_func(self, model):
+    def eval_func(self, model, dataset='valid'):
         '''
-        Eval function to test the model with the given weights over the test dataset
+        Eval function to test the model with the given weights over the given dataset
+        possible sets: 'valid','test'
         '''
         model.eval()
         correct = 0
         total = 0
         with torch.no_grad():
-            for data in self.testloader:
-                images, labels = data[0].to(self.device), data[1].to(self.device)
-                outputs = model(images)
-                _, predicted = torch.max(outputs.data, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
+            if dataset == 'test':
+                for data in self.testloader:
+                    images, labels = data[0].to(self.device), data[1].to(self.device)
+                    outputs = model(images)
+                    _, predicted = torch.max(outputs.data, 1)
+                    total += labels.size(0)
+                    correct += (predicted == labels).sum().item()
+            elif dataset == 'valid':
+                for data in self.validloader:
+                    images, labels = data[0].to(self.device), data[1].to(self.device)
+                    outputs = model(images)
+                    _, predicted = torch.max(outputs.data, 1)
+                    total += labels.size(0)
+                    correct += (predicted == labels).sum().item()
+            else:
+                error('given dataset doesn\'t exist')
+                
 
         return 100 * correct / total

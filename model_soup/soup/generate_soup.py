@@ -55,7 +55,7 @@ def make_soup(models_folder, soup, evaluator, device=None, method=Methods.GREEDY
     N = 1
 
     if method == Methods.GREEDY:
-        baseline_performance = evaluator.eval_func(soup)
+        baseline_performance = evaluator.eval_func(soup,'valid')
     print(f"baseline: {baseline_performance}")
 
     all_model_files.remove(initial_model_file)
@@ -64,7 +64,7 @@ def make_soup(models_folder, soup, evaluator, device=None, method=Methods.GREEDY
             file = os.path.join(models_folder, file)
             soup_next = deepcopy(soup)
             soup_next, N = add_ingradient(soup_next, file, N)
-            new_performance = evaluator.eval_func(soup_next)
+            new_performance = evaluator.eval_func(soup_next,'valid')
             print(f"new perf: {new_performance}")
 
             if method == Methods.GREEDY:
@@ -78,6 +78,6 @@ def make_soup(models_folder, soup, evaluator, device=None, method=Methods.GREEDY
             else:
                 raise NotImplemented                     
 
-    final_performance = evaluator.eval_func(soup)
+    final_performance = evaluator.eval_func(soup,'test')
     return soup, final_performance, N
 
