@@ -11,6 +11,11 @@ class Methods(Enum):
     PRUNED = 3
 
 
+class Strategy(Enum):
+    RANDOM = 1
+    SORTED = 2
+
+
 def add_ingradient(soup, path, N):
     ingradient = deepcopy(soup)
     ingradient.load_state_dict(torch.load(path)['state_dict'])
@@ -22,7 +27,7 @@ def add_ingradient(soup, path, N):
     return soup, N+1
 
 
-def make_soup(models_folder, soup, evaluator, device=None, method=Methods.GREEDY, initial_model_file=None):
+def make_soup(models_folder, soup, evaluator, num_ingradients=0, device=None, method=Methods.GREEDY, initial_model_file=None, strategy=Strategy.RANDOM):
     '''
     Generates a soup using the given evaluator and method, returns soup and best performance
     Inputs:
@@ -43,10 +48,26 @@ def make_soup(models_folder, soup, evaluator, device=None, method=Methods.GREEDY
 
     all_model_files = os.listdir(models_folder)
 
-    while initial_model_file is None:
-        chosen_file = random.choice(all_model_files)
-        if os.path.isfile(os.path.join(models_folder, chosen_file)): #ignore hidden directories
-            initial_model_file = chosen_file
+    if strategy == Strategy.SORTED:
+        models = {}
+        for model in all_model_files:
+            if os.path.isfile(os.path.join(models_folder, model)):
+                soup.load_state_dict(torch.load(os.path.join(models_folder, model), map_location=device)['state_dict'])
+                soup.to(device)
+                soup.eval()
+                models[model] = evaluator.eval_func(soup)
+        models = dict(sorted(models.items(), key=lambda item: item[1], reverse=True))
+        all_model_files = list(models.keys())
+        initial_model_file = all_model_files[0]
+
+
+    elif strategy == Strategy.RANDOM:
+        random.shuffle(all_model_files)
+
+        while initial_model_file is None:
+            chosen_file = random.choice(all_model_files)
+            if os.path.isfile(os.path.join(models_folder, chosen_file)): #ignore hidden directories
+                initial_model_file = chosen_file
 
     soup.load_state_dict(torch.load(os.path.join(models_folder, initial_model_file), map_location=device)['state_dict'])
     soup.to(device)
@@ -55,7 +76,7 @@ def make_soup(models_folder, soup, evaluator, device=None, method=Methods.GREEDY
     N = 1
 
     if method == Methods.GREEDY:
-        baseline_performance = evaluator.eval_func(soup)
+        baseline_performance = evaluator.eval_func(soup,'valid')
     print(f"baseline: {baseline_performance}")
 
     all_model_files.remove(initial_model_file)
@@ -64,13 +85,16 @@ def make_soup(models_folder, soup, evaluator, device=None, method=Methods.GREEDY
             file = os.path.join(models_folder, file)
             soup_next = deepcopy(soup)
             soup_next, N = add_ingradient(soup_next, file, N)
-            new_performance = evaluator.eval_func(soup_next)
+            new_performance = evaluator.eval_func(soup_next,'valid')
             print(f"new perf: {new_performance}")
 
             if method == Methods.GREEDY:
                 if new_performance >= baseline_performance:
                     soup = soup_next
                     baseline_performance = new_performance
+                    if num_ingradients != 0:
+                        if N >= num_ingradients:
+                            break
                 else:
                     N -= 1
             elif method == Methods.UNIFORM:
@@ -78,6 +102,6 @@ def make_soup(models_folder, soup, evaluator, device=None, method=Methods.GREEDY
             else:
                 raise NotImplemented                     
 
-    final_performance = evaluator.eval_func(soup)
+    final_performance = evaluator.eval_func(soup,'test')
     return soup, final_performance, N
 
