@@ -1,12 +1,14 @@
 import torch
 import torchvision
 import torchvision.transforms as transforms
+from model_soup.soup.evaluator import Evaluator
 
 
-class ResnetEvaluator:
+class CIFAR100Evaluator(Evaluator):
     def __init__(self, device=None, batch_size=256, input_size=32):
-        if device is None:
-            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        
+        super().__init__(device=device)
+
         data_transforms = {
             'test': transforms.Compose([
                 transforms.Resize(input_size),
@@ -25,7 +27,6 @@ class ResnetEvaluator:
         self.validloader = torch.utils.data.DataLoader(valset, batch_size=batch_size,
                                          shuffle=False, num_workers=2)
 
-        self.device = device
 
     def eval_func(self, model, dataset='valid'):
         '''
