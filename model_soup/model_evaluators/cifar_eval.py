@@ -52,7 +52,7 @@ class CIFAR100Evaluator(Evaluator):
                     total += labels.size(0)
                     correct += (predicted == labels).sum().item()
             else:
-                error('given dataset doesn\'t exist')
+                raise ValueError('given dataset doesn\'t exist')
                 
 
         return 100 * correct / total
