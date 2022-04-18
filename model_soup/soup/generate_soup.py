@@ -48,26 +48,26 @@ def make_soup(models_folder, soup, evaluator, num_ingradients=0, device=None, me
 
     all_model_files = os.listdir(models_folder)
 
-    if strategy == Strategy.SORTED:
-        models = {}
-        for model in all_model_files:
-            if os.path.isfile(os.path.join(models_folder, model)):
-                soup.load_state_dict(torch.load(os.path.join(models_folder, model), map_location=device)['state_dict'])
-                soup.to(device)
-                soup.eval()
-                models[model] = evaluator.eval_func(soup)
-        models = dict(sorted(models.items(), key=lambda item: item[1], reverse=True))
-        all_model_files = list(models.keys())
-        initial_model_file = all_model_files[0]
+    # if strategy == Strategy.SORTED:
+    models = {}
+    for model in all_model_files:
+        if os.path.isfile(os.path.join(models_folder, model)):
+            soup.load_state_dict(torch.load(os.path.join(models_folder, model), map_location=device)['state_dict'])
+            soup.to(device)
+            soup.eval()
+            models[model] = evaluator.eval_func(soup)
+    models = dict(sorted(models.items(), key=lambda item: item[1], reverse=True))
+    all_model_files = list(models.keys())
+    initial_model_file = all_model_files[0]
 
 
-    elif strategy == Strategy.RANDOM:
+    if strategy == Strategy.RANDOM:
         random.shuffle(all_model_files)
 
-        while initial_model_file is None:
-            chosen_file = random.choice(all_model_files)
-            if os.path.isfile(os.path.join(models_folder, chosen_file)): #ignore hidden directories
-                initial_model_file = chosen_file
+    # while initial_model_file is None:
+    #     chosen_file = random.choice(all_model_files)
+    #     if os.path.isfile(os.path.join(models_folder, chosen_file)): #ignore hidden directories
+    #         initial_model_file = chosen_file
 
     soup.load_state_dict(torch.load(os.path.join(models_folder, initial_model_file), map_location=device)['state_dict'])
     soup.to(device)
@@ -77,7 +77,7 @@ def make_soup(models_folder, soup, evaluator, num_ingradients=0, device=None, me
 
     if method == Methods.GREEDY:
         baseline_performance = evaluator.eval_func(soup,'valid')
-    print(f"baseline: {baseline_performance}")
+    # print(f"baseline: {baseline_performance}")
 
     all_model_files.remove(initial_model_file)
     for file in all_model_files:
