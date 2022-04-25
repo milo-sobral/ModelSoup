@@ -103,6 +103,7 @@ def make_soup(models_folder, soup, evaluator, num_ingradients=0, device=None, me
             if method == Methods.GREEDY:
                 if new_performance >= baseline_performance:
                     soup = soup_next
+                    print("added model into soup!")
                     baseline_performance = new_performance
                     if num_ingradients != 0:
                         if N >= num_ingradients:
@@ -124,6 +125,7 @@ def make_soup(models_folder, soup, evaluator, num_ingradients=0, device=None, me
 
                 if new_performance >= baseline_performance:
                     soup = soup_next
+                    print("removed model from soup!")
                     baseline_performance = new_performance
                     if num_ingradients != 0 and N >= num_ingradients:
                          break
