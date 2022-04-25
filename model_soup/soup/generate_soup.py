@@ -98,9 +98,10 @@ def make_soup(models_folder, soup, evaluator, num_ingradients=0, device=None, me
             soup_next = deepcopy(soup)
             soup_next, N = add_ingradient(soup_next, file, N)
             new_performance = evaluator.eval_func(soup_next,'valid')
-            print(f"new perf: {new_performance}")
+            
 
             if method == Methods.GREEDY:
+                print(f"new perf: {new_performance}")
                 if new_performance >= baseline_performance:
                     soup = soup_next
                     print("added model into soup!")
