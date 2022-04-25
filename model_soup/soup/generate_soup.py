@@ -26,6 +26,16 @@ def add_ingradient(soup, path, N):
         
     return soup, N+1
 
+def remove_ingradient(soup, path, N):
+    ingradient = deepcopy(soup)
+    ingradient.load_state_dict(torch.load(path)['state_dict'])
+    ingradient.cuda()
+
+    for param1, param2 in zip(soup.parameters(), ingradient.parameters()):
+        param1.data = ((param1.data * N) - param2.data) / (N-1)
+        
+    return soup, N-1
+
 
 def make_soup(models_folder, soup, evaluator, num_ingradients=0, device=None, method=Methods.GREEDY, initial_model_file=None, strategy=Strategy.RANDOM):
     '''
@@ -97,10 +107,26 @@ def make_soup(models_folder, soup, evaluator, num_ingradients=0, device=None, me
                             break
                 else:
                     N -= 1
-            elif method == Methods.UNIFORM:
+            elif method == Methods.UNIFORM or method == Methods.PRUNED:
                 soup = soup_next
-            else:
-                raise NotImplemented                     
+
+    if method == Methods.PRUNED:
+        baseline_performance = evaluator.eval_func(soup,'valid')
+        for file in all_model_files:
+            if os.path.isfile(os.path.join(models_folder, file)): #ignore hidden directories
+                file = os.path.join(models_folder, file)
+                soup_next = deepcopy(soup)
+                soup_next, N = remove_ingradient(soup_next, file, N)
+                new_performance = evaluator.eval_func(soup_next,'valid')
+                print(f"new perf: {new_performance}")
+
+                if new_performance >= baseline_performance:
+                    soup = soup_next
+                    baseline_performance = new_performance
+                    if num_ingradients != 0 and N >= num_ingradients:
+                         break
+
+               
 
     final_performance = evaluator.eval_func(soup,'test')
     return soup, final_performance, N
