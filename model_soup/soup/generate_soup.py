@@ -116,7 +116,7 @@ def make_soup(models_folder, soup, evaluator, num_ingradients=0, device=None, me
     if method == Methods.PRUNED:
         baseline_performance = evaluator.eval_func(soup,'valid')
         print(f"baseline (uniform soup): {baseline_performance}")
-        for file in all_model_files:
+        for file in reversed(all_model_files):
             if os.path.isfile(os.path.join(models_folder, file)): #ignore hidden directories
                 file = os.path.join(models_folder, file)
                 soup_next = deepcopy(soup)
