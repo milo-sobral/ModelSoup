@@ -129,8 +129,8 @@ def make_soup(models_folder, soup, evaluator, num_ingradients=0, device=None, me
                     soup = soup_next
                     print("removed model from soup!")
                     baseline_performance = new_performance
-                    if num_ingradients != 0 and N >= num_ingradients:
-                         break
+                else:
+                    N += 1
 
                
 
