@@ -65,7 +65,9 @@ def make_soup(models_folder, soup, evaluator, num_ingradients=0, device=None, me
             soup.load_state_dict(torch.load(os.path.join(models_folder, model), map_location=device)['state_dict'])
             soup.to(device)
             soup.eval()
-            models[model] = evaluator.eval_func(soup)
+            performance = evaluator.eval_func(soup)
+            if performance >= 2: #do not add the models that were unable to learn
+                models[model] = performance
     models = dict(sorted(models.items(), key=lambda item: item[1], reverse=True))
     all_model_files = list(models.keys())
     initial_model_file = all_model_files[0]
