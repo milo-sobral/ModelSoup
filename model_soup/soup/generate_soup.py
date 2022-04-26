@@ -136,9 +136,6 @@ def make_soup(models_folder, soup, evaluator, num_ingradients=0, num_passes=1, d
                     if new_performance >= baseline_performance:
                         soup = soup_next
                         print("removed model from soup!")
-                        print(file)
-                        print(all_model_files)
-                        print(models_list)
                         all_model_files.remove(file) #remove this model from the considered models for the next passes
                         baseline_performance = new_performance
                     else:
