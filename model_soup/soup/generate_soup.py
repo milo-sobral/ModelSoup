@@ -93,12 +93,12 @@ def make_soup(models_folder, soup, evaluator, num_ingradients=0, num_passes=1, d
 
     all_model_files.remove(initial_model_file)
     for iteration in range(num_passes):
-        models_list = deepcopy(all_model_files)
-        for file in models_list:
+        #models_list = deepcopy(all_model_files)
+        for file in initial_model_file[:]:
             if os.path.isfile(os.path.join(models_folder, file)): #ignore hidden directories
-                file = os.path.join(models_folder, file)
+                filePath = os.path.join(models_folder, file)
                 soup_next = deepcopy(soup)
-                soup_next, N = add_ingradient(soup_next, file, N)
+                soup_next, N = add_ingradient(soup_next, filePath, N)
                 new_performance = evaluator.eval_func(soup_next,'valid')
             
 
@@ -124,12 +124,12 @@ def make_soup(models_folder, soup, evaluator, num_ingradients=0, num_passes=1, d
         baseline_performance = evaluator.eval_func(soup,'valid')
         print(f"baseline (uniform soup): {baseline_performance}")
         for iteration in range(num_passes):
-            models_list = deepcopy(all_model_files)
-            for file in reversed(models_list):
+            #models_list = deepcopy(all_model_files)
+            for file in reversed(all_model_files[:]):
                 if os.path.isfile(os.path.join(models_folder, file)): #ignore hidden directories
-                    file = os.path.join(models_folder, file)
+                    filePath = os.path.join(models_folder, file)
                     soup_next = deepcopy(soup)
-                    soup_next, N = remove_ingradient(soup_next, file, N)
+                    soup_next, N = remove_ingradient(soup_next, filePath, N)
                     new_performance = evaluator.eval_func(soup_next,'valid')
                     print(f"new perf: {new_performance}")
 
