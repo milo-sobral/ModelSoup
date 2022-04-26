@@ -47,6 +47,8 @@ def make_soup(models_folder, soup, evaluator, num_ingradients=0, num_passes=1, d
         - device : Torch device to run inference
         - method : One of Greedy or Uniform
         - initial_model_file : specify which file to use initially
+        - num_ingradients : the maximum number of ingredients for the soup (0 means no max)
+        - num_passes : the number of iterations over the list of models when making the soups (more useful with random strategy)
     Returns: 
         - soup : The soup made according to the method specified
         - final_performance : The final performance according to the specified evaluator of the model
@@ -93,8 +95,7 @@ def make_soup(models_folder, soup, evaluator, num_ingradients=0, num_passes=1, d
 
     all_model_files.remove(initial_model_file)
     for iteration in range(num_passes):
-        models_list = deepcopy(all_model_files)
-        for file in models_list:
+        for file in all_model_files:
             if os.path.isfile(os.path.join(models_folder, file)): #ignore hidden directories
                 filePath = os.path.join(models_folder, file)
                 soup_next = deepcopy(soup)
@@ -107,7 +108,6 @@ def make_soup(models_folder, soup, evaluator, num_ingradients=0, num_passes=1, d
                     if new_performance >= baseline_performance:
                         soup = soup_next
                         print("added model into soup!")
-                        all_model_files.remove(file) #remove this model from the considered models for the next passes
                         baseline_performance = new_performance
                         if num_ingradients != 0:
                             if N >= num_ingradients:
