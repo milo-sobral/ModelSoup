@@ -37,7 +37,7 @@ def remove_ingradient(soup, path, N):
     return soup, N-1
 
 
-def make_soup(models_folder, soup, evaluator, num_ingradients=0, device=None, method=Methods.GREEDY, initial_model_file=None, strategy=Strategy.RANDOM):
+def make_soup(models_folder, soup, evaluator, num_ingradients=0, num_passes=1, device=None, method=Methods.GREEDY, initial_model_file=None, strategy=Strategy.RANDOM):
     '''
     Generates a soup using the given evaluator and method, returns soup and best performance
     Inputs:
@@ -92,45 +92,52 @@ def make_soup(models_folder, soup, evaluator, num_ingradients=0, device=None, me
     # print(f"baseline: {baseline_performance}")
 
     all_model_files.remove(initial_model_file)
-    for file in all_model_files:
-        if os.path.isfile(os.path.join(models_folder, file)): #ignore hidden directories
-            file = os.path.join(models_folder, file)
-            soup_next = deepcopy(soup)
-            soup_next, N = add_ingradient(soup_next, file, N)
-            new_performance = evaluator.eval_func(soup_next,'valid')
-            
-
-            if method == Methods.GREEDY:
-                print(f"new perf: {new_performance}")
-                if new_performance >= baseline_performance:
-                    soup = soup_next
-                    print("added model into soup!")
-                    baseline_performance = new_performance
-                    if num_ingradients != 0:
-                        if N >= num_ingradients:
-                            break
-                else:
-                    N -= 1
-            elif method == Methods.UNIFORM or method == Methods.PRUNED:
-                soup = soup_next
-
-    if method == Methods.PRUNED:
-        baseline_performance = evaluator.eval_func(soup,'valid')
-        print(f"baseline (uniform soup): {baseline_performance}")
-        for file in reversed(all_model_files):
+    for iteration in range(num_passes):
+        for file in all_model_files:
             if os.path.isfile(os.path.join(models_folder, file)): #ignore hidden directories
                 file = os.path.join(models_folder, file)
                 soup_next = deepcopy(soup)
-                soup_next, N = remove_ingradient(soup_next, file, N)
+                soup_next, N = add_ingradient(soup_next, file, N)
                 new_performance = evaluator.eval_func(soup_next,'valid')
-                print(f"new perf: {new_performance}")
+            
 
-                if new_performance >= baseline_performance:
+                if method == Methods.GREEDY:
+                    print(f"new perf: {new_performance}")
+                    if new_performance >= baseline_performance:
+                        soup = soup_next
+                        print("added model into soup!")
+                        all_model_files.remove(file) #remove this model from the considered models for the next passes
+                        baseline_performance = new_performance
+                        if num_ingradients != 0:
+                            if N >= num_ingradients:
+                                break
+                    else:
+                        N -= 1
+                elif method == Methods.UNIFORM or method == Methods.PRUNED:
                     soup = soup_next
-                    print("removed model from soup!")
-                    baseline_performance = new_performance
-                else:
-                    N += 1
+        if method == Methods.UNIFORM or method == Methods.PRUNED: #only continue the passes if greedy soup
+            break
+
+    
+    if method == Methods.PRUNED:
+        baseline_performance = evaluator.eval_func(soup,'valid')
+        print(f"baseline (uniform soup): {baseline_performance}")
+        for iteration in range(num_passes):
+            for file in reversed(all_model_files):
+                if os.path.isfile(os.path.join(models_folder, file)): #ignore hidden directories
+                    file = os.path.join(models_folder, file)
+                    soup_next = deepcopy(soup)
+                    soup_next, N = remove_ingradient(soup_next, file, N)
+                    new_performance = evaluator.eval_func(soup_next,'valid')
+                    print(f"new perf: {new_performance}")
+
+                    if new_performance >= baseline_performance:
+                        soup = soup_next
+                        print("removed model from soup!")
+                        all_model_files.remove(file) #remove this model from the considered models for the next passes
+                        baseline_performance = new_performance
+                    else:
+                        N += 1
 
                
 
