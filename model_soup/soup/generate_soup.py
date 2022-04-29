@@ -68,7 +68,7 @@ def make_soup(models_folder, soup, evaluator, num_ingradients=0, num_passes=1, d
             soup.to(device)
             soup.eval()
             performance = evaluator.eval_func(soup)
-            if performance >= 2: #do not add the models that were unable to learn
+            if performance >= 10: #do not add the models that were unable to learn
                 models[model] = performance
     models = dict(sorted(models.items(), key=lambda item: item[1], reverse=True))
     all_model_files = list(models.keys())
