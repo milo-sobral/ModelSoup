@@ -7,7 +7,7 @@
   * Mehdi Zalai
 * Contact us: 
   * {milo.sobral, charles.dansereau, maninder.bhogal, mehdi.zalai}@polymtl.ca
-## Introduction
+  * 
 This repository contains the code for our study on the benefits and limitations of model soups. 
 
 ### Abstract
@@ -21,25 +21,25 @@ In this paper, we compare Model Soups performances on three different models (Re
 ## Getting Started
 
 Clone and install the library using the following: 
-    `git clone [this repo]`
-    `cd ModelSoup && pip install -e .`
+* `git clone [this repo]`
+* `cd ModelSoup && pip install -e .`
 
 You must then import the desired functions using:
-    `from model_soup.model_evaluators.cifar_eval import CIFAR100Evaluator`
-    `from model_soup.model_evaluators.resnet import resnet20`
-    `from model_soup.soup.generate_soup import make_soup, Methods, Strategy`
+* `from model_soup.model_evaluators.cifar_eval import CIFAR100Evaluator`
+* `from model_soup.model_evaluators.resnet import resnet20`
+* `from model_soup.soup.generate_soup import make_soup, Methods, Strategy`
 
 The make_soup function needs both an instance of the model and an evaluator so initialize them like so:
-    `model = resnet20()`
-    `evaluator = CIFAR100Evaluator()`
+* `model = resnet20()`
+* `evaluator = CIFAR100Evaluator()`
 
 You can then call the function with the following arguments:
-    `final_model, performance, N = make_soup(models_folder=MODEL_PATH, `
-                            `soup=model,`
-                            `evaluator=evaluator,`
-                            `method=Methods.GREEDY,`
-                            `strategy=Strategy.RANDOM,`
-                            `num_ingradients=0)`
+* `final_model, performance, N = make_soup(models_folder=MODEL_PATH, `
+  *                         `soup=model,`
+  *                          `evaluator=evaluator,`
+  *                        `method=Methods.GREEDY,`
+  *                         `strategy=Strategy.RANDOM,`
+  *                           `num_ingradients=0)`
 
 The outputs are:
 * final_model: a pytorch model with the best performing soup.
