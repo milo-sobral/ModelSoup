@@ -7,7 +7,7 @@
   * Mehdi Zalai
 * Contact us: 
   * {milo.sobral, charles.dansereau, maninder.bhogal, mehdi.zalai}@polymtl.ca
-  * 
+
 This repository contains the code for our study on the benefits and limitations of model soups. 
 
 ### Abstract
@@ -35,11 +35,11 @@ The make_soup function needs both an instance of the model and an evaluator so i
 
 You can then call the function with the following arguments:
 * `final_model, performance, N = make_soup(models_folder=MODEL_PATH, `
-  *                         `soup=model,`
-  *                          `evaluator=evaluator,`
-  *                        `method=Methods.GREEDY,`
-  *                         `strategy=Strategy.RANDOM,`
-  *                           `num_ingradients=0)`
+  * `soup=model,`
+  * `evaluator=evaluator,`
+  * `method=Methods.GREEDY,`
+  * `strategy=Strategy.RANDOM,`
+  * `num_ingradients=0)`
 
 The outputs are:
 * final_model: a pytorch model with the best performing soup.
